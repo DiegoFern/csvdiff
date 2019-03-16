@@ -105,13 +105,13 @@ class CSVType(click.ParamType):
     def __repr__(self):
         return 'CSV'
 
-
+print(23432423)
 @click.command()
 @click.argument('index_columns', type=CSVType())
 @click.argument('from_csv', type=click.Path(exists=True))
 @click.argument('to_csv', type=click.Path(exists=True))
 @click.option('--style',
-              type=click.Choice(['compact', 'pretty', 'summary']),
+              type=click.Choice(['compact', 'pretty ', 'summary','git']),
               default='compact',
               help=('Instead of the default compact output, pretty-print '
                     'or give a summary instead'))
@@ -132,7 +132,6 @@ def csvdiff_cmd(index_columns, from_csv, to_csv, style=None, output=None,
     are each expected to have a header row, and for each row to be uniquely
     identified by one or more indexing columns.
     """
-
     if ignore_columns is not None:
         for i in ignore_columns:
             if i in index_columns:
@@ -144,9 +143,16 @@ def csvdiff_cmd(index_columns, from_csv, to_csv, style=None, output=None,
 
     try:
         if style == 'summary':
+            print('up')
             _diff_and_summarize(from_csv, to_csv, index_columns, ostream,
                                 sep=sep, ignored_columns=ignore_columns,
                                 significance=significance)
+        elif style=='git':
+            _git(from_csv, to_csv, index_columns, ostream,
+                                sep=sep, ignored_columns=ignore_columns,
+                                significance=significance)
+
+
         else:
             compact = (style == 'compact')
             _diff_files_to_stream(from_csv, to_csv, index_columns, ostream,
@@ -193,6 +199,26 @@ def _diff_and_summarize(from_csv, to_csv, index_columns, stream=sys.stdout,
                  else EXIT_DIFFERENT)
     sys.exit(exit_code)
 
+
+def _git(from_csv, to_csv, index_columns, stream=sys.stdout,
+                        sep=',', ignored_columns=None, significance=None):
+    from_records = list(records.load(from_csv, sep=sep))
+    to_records = records.load(to_csv, sep=sep)
+
+    diff = patch.create(from_records, to_records, index_columns, ignored_columns)
+        
+    removed = (diff['removed'])
+    added = (diff['added'])
+    changed = (diff['changed'])
+    print_red=lambda *args,**kargs:print((*('\033[31m{}'.format(args[0]),)+args[1:]),**kargs)
+    print_green=lambda *args,**kargs:print(*(('\033[92m{}'.format(args[0]),)+args[1:]),**kargs)
+    for i in removed:
+        print_red(i,file=stream)
+    for j in added:
+        print_green(j,file=stream)
+    for k in changed:
+        print_green(k['key'],{f:v['from'] for f,v in  k['fields'].items()})
+        print_red(k['key'],{f:v['to'] for f,v in  k['fields'].items()})
 
 def _summarize_diff(diff, orig_size, stream=sys.stdout):
     if orig_size == 0:
