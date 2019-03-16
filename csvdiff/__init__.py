@@ -105,7 +105,6 @@ class CSVType(click.ParamType):
     def __repr__(self):
         return 'CSV'
 
-print(23432423)
 @click.command()
 @click.argument('index_columns', type=CSVType())
 @click.argument('from_csv', type=click.Path(exists=True))
@@ -143,7 +142,6 @@ def csvdiff_cmd(index_columns, from_csv, to_csv, style=None, output=None,
 
     try:
         if style == 'summary':
-            print('up')
             _diff_and_summarize(from_csv, to_csv, index_columns, ostream,
                                 sep=sep, ignored_columns=ignore_columns,
                                 significance=significance)
@@ -217,8 +215,8 @@ def _git(from_csv, to_csv, index_columns, stream=sys.stdout,
     for j in added:
         print_green(j,file=stream)
     for k in changed:
-        print_green(k['key'],{f:v['from'] for f,v in  k['fields'].items()})
-        print_red(k['key'],{f:v['to'] for f,v in  k['fields'].items()})
+        print_red(k['key'],{f:v['from'] for f,v in  k['fields'].items()})
+        print_green(k['key'],{f:v['to'] for f,v in  k['fields'].items()})
 
 def _summarize_diff(diff, orig_size, stream=sys.stdout):
     if orig_size == 0:
