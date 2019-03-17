@@ -71,8 +71,10 @@ def filter_ignored(index: Index, ignore_columns: List[Column]) -> Index:
     for record in index.values():
         # edit the record in-place
         for column in ignore_columns:
-            del record[column]
-
+            try:
+                del record[column]
+            except:
+                pass
     return index
 
 

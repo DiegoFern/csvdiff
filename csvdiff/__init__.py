@@ -198,18 +198,31 @@ def _diff_and_summarize(from_csv, to_csv, index_columns, stream=sys.stdout,
     sys.exit(exit_code)
 
 
+print_red=lambda *args,**kargs:print((*('\033[31m{}'.format(args[0]),)+args[1:]),**kargs)
+print_green=lambda *args,**kargs:print(*(('\033[92m{}'.format(args[0]),)+args[1:]),**kargs)
+
+
 def _git(from_csv, to_csv, index_columns, stream=sys.stdout,
                         sep=',', ignored_columns=None, significance=None):
-    from_records = list(records.load(from_csv, sep=sep))
+    r=records.load(from_csv, sep=sep)
     to_records = records.load(to_csv, sep=sep)
-
+    
+    records_fields=(r.reader.fieldnames)
+    to_records_fields=(to_records.reader.fieldnames)
+    from_records = list(r)
+    if set(to_records_fields)!=set(records_fields):
+        ignored_columns=set(to_records_fields).symmetric_difference(records_fields)
+        diff_cols=set(to_records_fields)-set(records_fields)
+        if diff_cols:
+            print_green( diff_cols )
+        diff_cols=set(records_fields)-set(to_records_fields) 
+        if diff_cols:
+            print_red(set(records_fields)-set(to_records_fields))
     diff = patch.create(from_records, to_records, index_columns, ignored_columns)
         
     removed = (diff['removed'])
     added = (diff['added'])
     changed = (diff['changed'])
-    print_red=lambda *args,**kargs:print((*('\033[31m{}'.format(args[0]),)+args[1:]),**kargs)
-    print_green=lambda *args,**kargs:print(*(('\033[92m{}'.format(args[0]),)+args[1:]),**kargs)
     for i in removed:
         print_red(i,file=stream)
     for j in added:
